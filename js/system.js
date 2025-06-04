@@ -1,5 +1,6 @@
 // Inicjacja głównego obiektu z danymi systemu
 function createSystemData(fileData = null) {
+  // console.log(fileData);
   if (fileData) {
     systemData.supplyType = fileData.supplyType;
     systemData.structureType = fileData.structureType;
@@ -12,6 +13,7 @@ function createSystemData(fileData = null) {
     systemData.supplyType = initSystem.supplyType;
     systemData.structureType = initSystem.structureType;
     systemData.batteryBackUp = initSystem.batteryBackUp;
+    console.log(initSystem);
     systemData.devicesTypes.detectors.push({
       name: initSystem.detectorName,
       gasDetected: initSystem.gasDetected,
@@ -150,7 +152,7 @@ function createSegmentDeviceTypeSelect(device) {
   segmentDeviceSelectContainer.appendChild(segmentDeviceLabel);
   segmentDeviceSelectWrapper.appendChild(segmentDeviceSelect);
   segmentDeviceSelectContainer.appendChild(segmentDeviceSelectWrapper);
-  const structureType = STRUCTURE_TYPES.find((structureType) => structureType.type === systemData.structureType);
+  const structureType = STRUCTURE_TYPES.find((structureType) => structureType.type[lang] === systemData.structureType);
   structureType.devices.forEach((structureDevice) => {
     const deviceTypeOption = document.createElement("option");
     setAttributes(deviceTypeOption, { value: structureDevice.type });

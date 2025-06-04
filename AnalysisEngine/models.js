@@ -3,7 +3,10 @@ const PowerSupplies = [
   { type: "24V + UPS", supplyVoltage_V: 21 },
   { type: "48V / 48V + UPS", supplyVoltage_V: 48 },
 ];
-
+        // toledLabelWe: "FLUE GAS ALARM DO NOT ENTER",
+        // toledLabelWj: "FLUE GAS ALARM DO NOT DRIVE IN",
+        // toledLabelOp: "FLUE GAS ALARM LEAVE GARAGE",
+        // toledLabelWs: "Printed upon customer request",
 const Cables = [
   { type: "2 x 1 mm2", resistivity_OhmPerMeter: 0.0181 },
   { type: "2 x 1,5 mm2", resistivity_OhmPerMeter: 0.0121 },

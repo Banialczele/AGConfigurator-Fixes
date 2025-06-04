@@ -9,17 +9,7 @@ const systemData = {
   bus: [],
 };
 
-// Obiekt inicjacyjny systemu
-const initSystem = {
-  supplyType: `${PowerSupplies[0].type}`,
-  amountOfDetectors: 1,
-  EWL: 15,
-  detectorName: "",
-  deviceType: "",
-  gasDetected: `${STRUCTURE_TYPES[0].detection[0]}`,
-  structureType: `${STRUCTURE_TYPES[0].type[lang]}`,
-  batteryBackUp: "YES",
-};
+let initSystem = {};
 
 // Etykiety dla widoku aplikacji w obsługiwanych przez aplikację językach
 
@@ -39,23 +29,34 @@ function setMobileMenuClickEvent() {
 
 function checkLang() {
   let HREF = window.location.href;
+
   if (HREF.includes(`lang=pl`) || !HREF.includes(`lang`)) {
     lang = "pl";
-  } else if (HREF.includes(`lang=eng`)) {
+  } else if (HREF.includes(`lang=en`)) {
     lang = "en";
   }
 }
 
 // Entry point aplikacji, generowanie całego widoku do wproadzenia danych
 window.addEventListener("load", () => {
+  checkLang();
+  translate();
+  initSystem = {
+    selectedStructure: {},
+    supplyType: `${PowerSupplies[0].type}`,
+    amountOfDetectors: 1,
+    EWL: 15,
+    detectorName: "",
+    deviceType: "",
+    gasDetected: `${STRUCTURE_TYPES[0].detection[0]}`,
+    structureType: `${STRUCTURE_TYPES[0].type[lang]}`,
+    batteryBackUp: "YES",
+  };
   setMobileMenuClickEvent();
   formInit();
   handleFormSubmit();
   setExportToCSVButtonEvent();
   setExportToJSONButtonEvent();
-  // translate();
-  console.log('afsd')
-  cosnole.log('guisfdj')
 });
 
 // Reset pozycji scrolla do początku strony

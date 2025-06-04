@@ -23,14 +23,11 @@ function createStructureTypesListSelect() {
 
 // Tworzenie opcji dla selecta dot. typu gazu
 function createDetectedGasListSelect() {
-  console.log(initSystem);
   const gasDetectedSelect = document.getElementById("gasDetected");
   gasDetectedSelect.replaceChildren();
   const constructionType = STRUCTURE_TYPES.find(
     (elem) => elem.type[lang] === initSystem.structureType
   );
-  console.log(constructionType);
-  // constructionType.detection.forEach(({ gasDetected, type,  }) => {
   constructionType.detection.forEach((gasDetected, i) => {
     if (constructionType.devices[i].class === "detector") {
       const gasOption = document.createElement("option");
@@ -116,13 +113,19 @@ function handleFormSubmit() {
       document.getElementById("amountOfDetectors").value
     );
     initSystem.structureType = document.getElementById("structureType").value;
+    const selectedStructure = STRUCTURE_TYPES.find((elem) => elem.type[lang] === initSystem.structureType);
+
     initSystem.gasDetected = document.getElementById("gasDetected").value;
+
+    const selectedDevice = selectedStructure.devices.find(device => device.gasDetected === initSystem.gasDetected);
+    initSystem.detectorName= selectedDevice.name;
+    initSystem.deviceType = selectedDevice.class;
     initSystem.batteryBackUp = document.getElementById("batteryBackUp").value;
     initSystem.EWL = parseInt(document.getElementById("EWL").value);
+    console.log(initSystem)
     createSystemData();
     setSystem();
     system.scrollIntoView({ behavior: "smooth", block: "start" });
-    console.log(systemData);
     // analiseSystem(systemData);
   });
 }
