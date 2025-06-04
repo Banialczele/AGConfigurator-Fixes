@@ -55,6 +55,7 @@ window.addEventListener("load", () => {
   setExportToJSONButtonEvent();
   // translate();
   console.log('afsd')
+  cosnole.log('guisfdj')
 });
 
 // Reset pozycji scrolla do początku strony
