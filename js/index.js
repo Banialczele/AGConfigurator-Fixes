@@ -54,6 +54,7 @@ window.addEventListener("load", () => {
   setExportToCSVButtonEvent();
   setExportToJSONButtonEvent();
   // translate();
+  console.log('afsd')
 });
 
 // Reset pozycji scrolla do początku strony
