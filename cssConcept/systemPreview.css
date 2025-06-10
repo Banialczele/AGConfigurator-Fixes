@@ -75,13 +75,19 @@
 .systemGraphics .systemDiagram .deviceSegment {
   width: 100%;
   display: grid;
-  grid-template-areas: "sirenImage tcon deviceImage";
+  grid-template-areas: "checkbox sirenImage tcon deviceImage";
   grid-template-rows: 200px;
-  grid-template-columns: 1fr 100px 1fr;
+  grid-template-columns: 15px 1fr 100px 1fr;
 }
 
 .systemGraphics .systemDiagram .deviceSegment:nth-child(odd) { background-color: var(--accent-bg-color); }
 
+.systemDiagram .deviceSegment .checkboxContainer {
+  grid-row: checkbox;
+  display:flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
 
 .systemDiagram .deviceSegment .warningDeviceImageContainer {
   grid-row: sirenImage;
