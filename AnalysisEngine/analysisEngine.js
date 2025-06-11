@@ -145,6 +145,7 @@ function copyObj(obj) {
 //-----------------------------------------------------------------------------
 // return: NCN
 function analiseSystem(system) {
+	console.log(system);
 	let res = null;
 	let bus = system.bus;
 	let lastSect = bus[bus.length - 1];

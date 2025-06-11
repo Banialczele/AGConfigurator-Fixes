@@ -3,10 +3,7 @@ const PowerSupplies = [
 	{ type: "24V + UPS", supplyVoltage_V: 21 },
 	{ type: "48V / 48V + UPS", supplyVoltage_V: 48 },
 ];
-// toledLabelWe: "FLUE GAS ALARM DO NOT ENTER",
-// toledLabelWj: "FLUE GAS ALARM DO NOT DRIVE IN",
-// toledLabelOp: "FLUE GAS ALARM LEAVE GARAGE",
-// toledLabelWs: "Printed upon customer request",
+
 const Cables = [
 	{ type: "2 x 1 mm2", resistivity_OhmPerMeter: 0.0181 },
 	{ type: "2 x 1,5 mm2", resistivity_OhmPerMeter: 0.0121 },
@@ -256,14 +253,12 @@ const Devices = [
 		class: DeviceCl.valveCtrl,
 	}, // see adms://s:192.168.0.251/b:archidemes/i:226424
 ];
-// { type: "T-conL", icon: "T-conL.svg", typeOfDevice: `bus` },
-// { type: "T-conP", icon: "T-conP.svg", typeOfDevice: `bus` },
 
 const TOLED_OPTIONS = [
-	{ translate: "toledLabelWe", type: "NADMIAR SPALIN NIE WCHODZIĆ" },
-	{ translate: "toledLabelWj", type: "NADMIAR SPALIN NIE WJEŻDŻAĆ" },
-	{ translate: "toledLabelOp", type: "NADMIAR SPALIN OPUŚĆ GARAŻ" },
-	{ translate: "toledLabelWs", type: "Napis na życzenie klienta" },
+	{ translate: "toledLabelWe", type: { pl: "NADMIAR SPALIN NIE WCHODZIĆ", en: "EXCESS EXHAUST GASES DO NOT ENTER" } },
+	{ translate: "toledLabelWj", type: { pl: "NADMIAR SPALIN NIE WJEŻDŻAĆ", en: "EXCESS EXHAUST GASES DO NOT DRIVE IN" } },
+	{ translate: "toledLabelOp", type: { pl: "NADMIAR SPALIN OPUŚĆ GARAŻ", en: "EXCESS EXHAUST GASES LEAVE THE GARAGE" } },
+	{ translate: "toledLabelWs", type: { pl: "Napis na życzenie klienta", en: "Inscription at the customer'S request" } },
 ];
 
 // const DEVICEDOCS = {

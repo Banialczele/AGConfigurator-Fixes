@@ -1,77 +1,88 @@
 // Tworzenie opcji dla selecta dot. rodzaju struktury
 function createStructureTypesListSelect() {
-	const structureTypeSelect = document.getElementById("structureType");
-	STRUCTURE_TYPES.forEach((elem, i) => {
-		const structureOption = document.createElement("option");
-		setAttributes(structureOption, {
+	const select = document.getElementById("structureType");
+	const fragment = document.createDocumentFragment();
+
+	STRUCTURE_TYPES.forEach(elem => {
+		const option = createOption(elem.type[lang], elem.type[lang], {
 			class: "structureOption",
-			value: elem.type[lang],
-			// "data-translate": `${STRUCTURE_TYPES[i].translate}`
+			selected: elem.type[lang] === initSystem.structureType
 		});
-		if (elem.type[lang] === initSystem.structureType) {
-			setAttributes(structureOption, { selected: "selected" });
-		}
-		structureOption.appendChild(document.createTextNode(elem.type[lang]));
-		structureTypeSelect.appendChild(structureOption);
+		fragment.appendChild(option);
 	});
-	// Wyłapanie zmian w select dot. wybranego typu struktury, przypisanie go do obiektu inicjującego podgląd systemu, a następnie wygenerowanie listy możliwych do wyboru typu gazu
-	structureTypeSelect.addEventListener("change", event => {
-		initSystem.structureType = event.target[event.target.selectedIndex].value;
+
+	select.innerHTML = "";
+	select.appendChild(fragment);
+
+	select.addEventListener("change", event => {
+		initSystem.structureType = event.target.value;
 		createDetectedGasListSelect();
 	});
 }
 
-// Tworzenie opcji dla selecta dot. typu gazu
 function createDetectedGasListSelect() {
-	const gasDetectedSelect = document.getElementById("gasDetected");
-	gasDetectedSelect.replaceChildren();
-	const constructionType = STRUCTURE_TYPES.find(elem => elem.type[lang] === initSystem.structureType);
-	constructionType.detection.forEach((gasDetected, i) => {
-		if (constructionType.devices[i].class === "detector") {
-			const gasOption = document.createElement("option");
-			setAttributes(gasOption, {
-				class: "gasOption",
-				value: gasDetected,
-				"data-deviceName": constructionType.devices[i].name,
-				"data-deviceType": constructionType.devices[i].class,
-			});
-			if (gasDetected === initSystem.gasDetected) {
-				setAttributes(gasOption, { selected: "selected" });
-			}
-			gasOption.appendChild(document.createTextNode(gasDetected));
-			gasDetectedSelect.appendChild(gasOption);
-		}
+	const select = document.getElementById("gasDetected");
+	const fragment = document.createDocumentFragment();
+
+	select.innerHTML = "";
+
+	const structure = STRUCTURE_TYPES.find(e => e.type[lang] === initSystem.structureType);
+	if (!structure) return;
+
+	structure.detection.forEach((gas, i) => {
+		const device = structure.devices[i];
+		if (device.class !== "detector") return;
+
+		const option = createOption(gas, gas, {
+			class: "gasOption",
+			"data-devicename": device.name,
+			"data-devicetype": device.class,
+			selected: gas === initSystem.gasDetected
+		});
+		fragment.appendChild(option);
 	});
-	// Wyłapanie zmian w select dot. wybranego typu gazu i przypisanie nazwy czujnika + rodzaju czujnika do obiektu inicjującego podgląd systemu
-	gasDetectedSelect.addEventListener("change", event => {
-		const option = event.target;
-		initSystem.detector.type = option[option.selectedIndex].dataset.devicename;
-		initSystem.deviceType = option[option.selectedIndex].dataset.devicetype;
+
+	select.appendChild(fragment);
+
+	select.addEventListener("change", event => {
+		const opt = event.target.selectedOptions[0];
+		initSystem.detector.type = opt.dataset.devicename;
+		initSystem.deviceType = opt.dataset.devicetype;
 	});
 }
 
-// Tworzenie opcji dla selecta dot. możliwości akumulatorowego podtrzymywania pracy
 function createBatteryBackUpListSelect() {
-	const batteryBackUpSelect = document.getElementById("batteryBackUp");
-	const yesOption = document.createElement("option");
-	const noOption = document.createElement("option");
-	let HREF = window.location.href;
-	setAttributes(yesOption, { class: "batteryBackupOption", value: "YES" });
-	setAttributes(noOption, { class: "batteryBackupOption", value: "NO" });
-	if (initSystem.batteryBackUp === "YES") {
-		setAttributes(yesOption, { selected: "selected" });
-	} else {
-		setAttributes(noOption, { selected: "selected" });
-	}
-	if (HREF.includes(`lang=pl`)) {
-		yesOption.appendChild(document.createTextNode("Tak"));
-		noOption.appendChild(document.createTextNode("Nie"));
-	} else {
-		yesOption.appendChild(document.createTextNode("Yes"));
-		noOption.appendChild(document.createTextNode("No"));
-	}
-	batteryBackUpSelect.appendChild(yesOption);
-	batteryBackUpSelect.appendChild(noOption);
+	const select = document.getElementById("batteryBackUp");
+	const fragment = document.createDocumentFragment();
+	const isPL = window.location.href.includes("lang=pl");
+
+	const yesOption = createOption("YES", isPL ? "Tak" : "Yes", {
+		class: "batteryBackupOption",
+		selected: initSystem.batteryBackUp === "YES"
+	});
+
+	const noOption = createOption("NO", isPL ? "Nie" : "No", {
+		class: "batteryBackupOption",
+		selected: initSystem.batteryBackUp !== "YES"
+	});
+
+	fragment.appendChild(yesOption);
+	fragment.appendChild(noOption);
+
+	select.innerHTML = "";
+	select.appendChild(fragment);
+}
+
+// Pomocnicza funkcja do tworzenia opcji
+function createOption(value, text, attributes = {}) {
+	const option = document.createElement("option");
+	option.value = value;
+	option.textContent = text;
+	Object.entries(attributes).forEach(([key, val]) => {
+		if (val === true) option.setAttribute(key, key);
+		else if (val !== false && val != null) option.setAttribute(key, val);
+	});
+	return option;
 }
 
 // Ustawienie domyślnych wartości dla inputa liczby urządzeń oraz odległości między urządzeniami

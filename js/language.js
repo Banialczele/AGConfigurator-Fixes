@@ -26,7 +26,7 @@ const TRANSLATION = {
 	confirmButton: { pl: "Zatwierdź ▶", en: "Confirm ▶" },
 	defaultHeader: { pl: "Dane podstawowe", en: "Default data" },
 	detectorAmountsLabel: { pl: "Ilość czujników", en: "Detector quantity" },
-	quantity: { pl: "szt.", en: "pcs." },
+	quantity: { pl: " szt.", en: " pcs." },
 	shadedAmount: { pl: "(max 50szt.)", en: "(max 50pcs.)" },
 	structureLabel: { pl: "Rodzaj obiektu", en: "Structure type" },
 	batteryBackUpLabel: {
@@ -58,14 +58,14 @@ const TRANSLATION = {
 		en: "More information can be found in the document ",
 	},
 	aboutAppDescriptionLink: {
-		pl: "Przewodnik Systemu TetaGas.",
+		pl: "Przewodnik Systemu TetaGas",
 		en: "TetaGas System Guide",
 	},
 	fileLoadDesc: {
 		pl: "UPUŚRRRRĆ PLIK TUTAJ, ABY WCZYTAĆ WCZEŚNIEJ ZAPISANY SYSTEM",
 		en: "DROP A FILE TO LOAD PREVIOUSLY SAVED SYSTEM",
 	},
-	fileUpload: { pl: "Wczytaj ▶", en: "Upload system ▶" },
+	fileUpload: { pl: "Wczytaj system ▶", en: "Upload system ▶" },
 	systemStatusHeader: { pl: "Stan systemu", en: "System status" },
 	systemStatusDetectors: { pl: "CZUJNIKI GAZU", en: "GAS DETECTORS" },
 	systemStatusSignallers: { pl: "SYGNALIZATORY", en: "SIGNALLERS" },
@@ -108,7 +108,7 @@ const TRANSLATION = {
 	editMany: { pl: "Skonfiguruj wiele", en: "Edit multiple" },
 	checkboxes: {
 		pl: "Czekboksy",
-		en: "Checkbokses",
+		en: "Checkboxses",
 	},
 	unCheckAll: {
 		pl: "Odznacz wszystkie pola checkbox",
@@ -118,6 +118,29 @@ const TRANSLATION = {
 		pl: "Zaznacz wszystkie pola checkbox",
 		en: "Check all checkboxes",
 	},
+	deviceDescription: {
+		pl: "Czujnik gazu",
+		en: "Gas detector"
+	},
+	signallerDescription: {
+		pl: "Sygnalizator op.-aku.",
+		en: "Opt.-acu. signaling device"
+	},
+	toledDescription: {
+		pl: "Tablica ostrzegawcza",
+		en: "Warning panel"
+	},
+	deviceSegment: {
+		detector: {
+			pl: "Czujnik",
+			en: "Detector"
+		},
+		signaller: {
+			pl:"Sygnalizator",
+			en: "Signaller"
+		}
+	}
+
 };
 
 // const usedText = {

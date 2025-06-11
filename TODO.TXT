@@ -1,14 +1,18 @@
-- ilość sygnalizatorów z 12 na 26 !
+﻿- ilość sygnalizatorów z 12 na 26 !
 - ilość możliwych control v - 8szt !
 - zintegrować silnik z nowym systemem !
+- dodać przydatne linki ...
+
 
 - brakuje mechanizmu obliczania zasialacza/ dedykowanej JS optymalnie
 
 
 
-- dorobić guziczki analogicznie jak w starym konfiguratorze ...
+
+
+- dorobić guziczki analogicznie jak w starym konfiguratorze ... checkboxy :) ✔
  - guziczki po prawej 'zapis system' 'pobierz zestawienie urządzeń' - maja zamienione funkcjonalności 
 mechanizm obliczania kabla jest zrobiony ✔
 - aktualizacja produktów ✔
-- dodać przydatne linki ...
+
 - pamiętać o wersji ENG  ✔

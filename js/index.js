@@ -56,6 +56,7 @@ window.addEventListener("load", () => {
 	setMobileMenuClickEvent();
 	formInit();
 	handleFormSubmit();
+	setupSystemEventHandlers();
 	setExportToCSVButtonEvent();
 	setExportToJSONButtonEvent();
 });

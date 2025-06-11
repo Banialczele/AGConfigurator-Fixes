@@ -3,9 +3,9 @@ function createSystemData(fileData = null) {
 	if (fileData) {
 		systemData.supplyType = fileData.supplyType;
 		systemData.structureType = fileData.structureType;
+		systemData.bus = fileData.bus;
 		systemData.batteryBackUp = fileData.batteryBackUp;
-		// systemData.devicesTypes = fileData.devicesTypes;
-		systemData.bus = fileData.devices;
+		systemData.devicesTypes = fileData.devicesTypes;
 	} else {
 		systemData.devicesTypes = { detectors: [], signallers: [] };
 		systemData.bus = [];
@@ -41,13 +41,14 @@ function createSegmentDiagram(device) {
 		id: `segmentDiagram${device.index}`,
 	});
 	deviceSegment.appendChild(createSegmentCheckbox());
-	deviceSegment.appendChild(createSegmentWarningDeviceImageDiagram(device));
+	deviceSegment.appendChild(createSegmentImage("warningDevice", device));
 	deviceSegment.appendChild(createSegmentBusImageDiagram(device.detector.class));
-	deviceSegment.appendChild(createSegmentDetectorImageDiagram(device));
+	deviceSegment.appendChild(createSegmentImage("detector", device));
 
 	return deviceSegment;
 }
 
+//Tworzenie checkboxa dla segmentu
 function createSegmentCheckbox() {
 	const checkBoxContainer = document.createElement(`div`);
 	const checkbox = document.createElement(`input`);
@@ -60,66 +61,25 @@ function createSegmentCheckbox() {
 	return checkBoxContainer;
 }
 
-// function checkboxSelected() {
-// 	checkboxes.forEach(checkbox => {
-// 		console.log("SFDF");
-// 	});
-// }
+//Tworzenie grafiki dla urządzenia
+function createSegmentImage(type, device) {
+	const container = document.createElement("div");
+	const image = document.createElement("img");
 
-// function handleChangesWhenCheckboxSelected() {
-// 	const checkboxes = document.querySelectorAll(`input[type="checkbox"]`);
-//   setAttributes(checkboxe)
-// 	const segmentSelects = document.querySelectorAll(`.actionsSegment select`);
-// 	const segmentInputs = document.querySelectorAll(`.actionsSegment input`);
-// 	segmentSelects.addEventListener("change", event => {
-// 		checkboxSelected();
-// 	});
-// 	segmentInputs.addEventListener("change", event => {
-//     checkboxSelected();
-//   });
-// }
+	const isDetector = device.detector.class === "detector";
+	const isTypeDetector = type === "detector";
 
-// Tworzenie obrazu detektora dla schematu segmentu urządzenia
-function createSegmentDetectorImageDiagram(device) {
-	const detectorImageContainer = document.createElement("div");
-	const detectorImage = document.createElement("img");
-	setAttributes(detectorImageContainer, { class: "detectorImageContainer" });
-	detectorImageContainer.appendChild(detectorImage);
-	if (device.detector.class === "detector") {
-		setAttributes(detectorImage, {
-			src: `./SVG/${device.detector.type}.svg`,
-			alt: "Detector image",
-		});
-		detectorImage.style.visibility = "visible";
-	} else {
-		setAttributes(detectorImage, { src: "", alt: "Detector image" });
-		detectorImage.style.visibility = "hidden";
-	}
+	setAttributes(container, { class: `${type}ImageContainer` });
+	container.appendChild(image);
 
-	return detectorImageContainer;
-}
+	const shouldShow = isTypeDetector === isDetector;
+	const src = shouldShow ? `./SVG/${device.detector.type}.svg` : "";
+	const alt = `${type === "detector" ? "Detector" : "Warning device"} image`;
 
-// Tworzenie obrazu sygnalizatora dla schematu segmentu urządzenia
-function createSegmentWarningDeviceImageDiagram(device) {
-	const warningDeviceImageContainer = document.createElement("div");
-	const warningDeviceImage = document.createElement("img");
-	setAttributes(warningDeviceImageContainer, {
-		class: "warningDeviceImageContainer",
-	});
-	warningDeviceImageContainer.appendChild(warningDeviceImage);
+	setAttributes(image, { src, alt });
+	image.style.visibility = shouldShow ? "visible" : "hidden";
 
-	if (device.detector.class !== "detector") {
-		setAttributes(warningDeviceImage, {
-			src: `./SVG/${device.detector.type}.svg`,
-			alt: "Warning device image",
-		});
-		warningDeviceImage.style.visibility = "visible";
-	} else {
-		setAttributes(warningDeviceImage, { src: "", alt: "Warning device image" });
-		warningDeviceImage.style.visibility = "hidden";
-	}
-
-	return warningDeviceImageContainer;
+	return container;
 }
 
 // Tworzenie obrazu T-Konektora dla schematu segmentu urządzenia
@@ -149,39 +109,61 @@ function createSystemSegmentsActionsList() {
 
 // Tworzenie panelu działań dla segmentu urządzenia
 function createSegmentActions(device) {
-	const actionsSegment = document.createElement("div");
-	const wrapper = document.createElement("div");
-	const deviceTypeWrapper = document.createElement("div");
-	setAttributes(actionsSegment, {
+	const actionsSegment = el("div", {
 		class: "actionsSegment",
 		id: `actionsSegment${device.index}`,
 		"data-segmentType": "detectors",
 		"data-segmentIndex": `${device.index}`,
 	});
-	setAttributes(wrapper, { class: "wrapper" });
-	setAttributes(deviceTypeWrapper, { class: "deviceTypeWrapper" });
-	wrapper.appendChild(createSegmentIndex(device));
-	wrapper.appendChild(deviceTypeWrapper);
+
+	const wrapper = el("div", { class: "wrapper" });
+	const deviceTypeWrapper = el("div", { class: "deviceTypeWrapper" });
+
 	deviceTypeWrapper.appendChild(createSegmentDeviceTypeSelect(device));
+
 	if (device.name === "TOLED") {
 		deviceTypeWrapper.appendChild(createSegmentTOLEDDescriptionSelect(device));
 	}
+
+	wrapper.appendChild(createSegmentIndex(device));
+	wrapper.appendChild(deviceTypeWrapper);
 	wrapper.appendChild(createSegmentWireLengthInput(device));
 	wrapper.appendChild(createSegmentButtons(device));
-	actionsSegment.appendChild(wrapper);
 
+	actionsSegment.appendChild(wrapper);
 	return actionsSegment;
+}
+
+// Pomocniczy skrót do tworzenia elementów z atrybutami
+function el(tag, attrs = {}, children = []) {
+	const element = document.createElement(tag);
+
+	// Ustaw atrybuty
+	Object.entries(attrs).forEach(([key, val]) => {
+		if (val !== false && val !== null && val !== undefined) {
+			element.setAttribute(key, val);
+		}
+	});
+
+	// Obsługa dzieci (tekst, element, tablica)
+	if (!Array.isArray(children)) {
+		children = [children];
+	}
+
+	children.forEach(child => {
+		if (typeof child === "string") {
+			element.appendChild(document.createTextNode(child));
+		} else if (child instanceof Node) {
+			element.appendChild(child);
+		}
+	});
+
+	return element;
 }
 
 // Tworzenie inputa indeksu dla segmentu urządzenia
 function createSegmentIndex(device) {
-	const segmentIndexLabel = document.createElement("label");
-	const segmentIndexInput = document.createElement("input");
-	setAttributes(segmentIndexLabel, {
-		class: "segmentIndexLabel",
-		for: `actionsSegmentIndex${device.index}`,
-	});
-	setAttributes(segmentIndexInput, {
+	const input = el("input", {
 		class: "segmentId",
 		id: `actionsSegmentIndex${device.index}`,
 		type: "number",
@@ -190,318 +172,362 @@ function createSegmentIndex(device) {
 		value: device.index,
 		disabled: true,
 	});
-	segmentIndexLabel.appendChild(document.createTextNode("Segment nr "));
-	segmentIndexLabel.appendChild(segmentIndexInput);
 
-	return segmentIndexLabel;
+	const label = el(
+		"label",
+		{
+			class: "segmentIndexLabel",
+			for: `actionsSegmentIndex${device.index}`,
+		},
+		["Segment nr ", input]
+	);
+
+	return label;
 }
-//createSegmentDeviceTypeSelect roboczo
+
 // Tworzenie selecta typu urządzeń dla segmentu urządzenia
 function createSegmentDeviceTypeSelect(device) {
-	const segmentDeviceSelectContainer = document.createElement("div");
-	const segmentDeviceLabel = document.createElement("label");
-	const segmentDeviceSelectWrapper = document.createElement("div");
-	const segmentDeviceSelect = document.createElement("select");
-	setAttributes(segmentDeviceSelectContainer, {
-		class: "segmentDeviceSelectContainer",
-	});
-	setAttributes(segmentDeviceLabel, {
-		class: "segmentDeviceLabel",
-		for: `actionsSegmentDevice${device.index}`,
-		"data-translate": "segmentDevice",
-	});
-	setAttributes(segmentDeviceSelectWrapper, { class: "formSelectInput" });
-	setAttributes(segmentDeviceSelect, {
+	const select = el("select", {
 		class: "segmentDeviceSelect",
 		id: `actionsSegmentDevice${device.index}`,
 	});
-	segmentDeviceLabel.appendChild(document.createTextNode("Urządzenie"));
-	segmentDeviceSelectContainer.appendChild(segmentDeviceLabel);
-	segmentDeviceSelectWrapper.appendChild(segmentDeviceSelect);
-	segmentDeviceSelectContainer.appendChild(segmentDeviceSelectWrapper);
 
 	initSystem.selectedStructure.devices.forEach(structureDevice => {
-		const deviceTypeOption = document.createElement("option");
-		setAttributes(deviceTypeOption, { value: structureDevice.type });
-		if (structureDevice.class === "detector") {
-			deviceTypeOption.appendChild(document.createTextNode(`Czujnik ${structureDevice.gasDetected}`));
-		} else {
-			deviceTypeOption.appendChild(document.createTextNode(`Sygnalizator ${structureDevice.type}`));
-		}
-		if (device.name === structureDevice.type) {
-			setAttributes(deviceTypeOption, { selected: "selected" });
-		}
-		segmentDeviceSelect.appendChild(deviceTypeOption);
-	});
-	// Nasłuchiwanie zdarzeń dot. zmiany typu urządzenia w wybranym segmencie
-	segmentDeviceSelect.addEventListener("change", event => {
-		setSegmentDeviceTypeSelectChangeEvent(event, device.index);
+		const text =
+			structureDevice.class === "detector"
+				? `${TRANSLATION.deviceSegment.detector[lang]} ${structureDevice.gasDetected}`
+				: `${TRANSLATION.deviceSegment.signaller[lang]} ${structureDevice.type}`;
+
+		const option = el(
+			"option",
+			{
+				value: structureDevice.type,
+				selected: device.type === structureDevice.type ? "selected" : null,
+			},
+			[text]
+		);
+
+		select.appendChild(option);
 	});
 
-	return segmentDeviceSelectContainer;
+	const label = el(
+		"label",
+		{
+			class: "segmentDeviceLabel",
+			for: `actionsSegmentDevice${device.index}`,
+			"data-translate": "segmentDevice",
+		},
+		[TRANSLATION.systemSegmentDescription[lang]]
+	);
+
+	const wrapper = el("div", { class: "formSelectInput" }, [select]);
+
+	return el("div", { class: "segmentDeviceSelectContainer" }, [label, wrapper]);
 }
 
+//Funkcja obsługująca zdarzenie zmiany systemu i manipulacją danych w dataSystem
 function manipulateDataSystem(index, newDevice) {
-	//Urządzenie na magistrali, którym manipulujemy
-	const selectedDevice = systemData.bus.find(element => {
-		return element.index === index;
-	});
+	const bus = systemData.bus;
+	const devicesTypes = systemData.devicesTypes;
 
-	//  Sprawdzenie liczebności urządzeń dotychczas wybranego typu na magistrali
-	const oldNameDeviceQuantity = systemData.bus.reduce((accumulator, setDeviceType) => {
-		if (setDeviceType.detector.type === selectedDevice.detector.type) {
-			return accumulator + 1;
-		} else {
-			return accumulator;
-		}
-	}, 0);
+	const selectedDevice = bus.find(el => el.index === index);
+	if (!selectedDevice) return;
 
-	// Usunięcie typu urządzenia z listy wykorzystywanych w systemie, jeśli wybrane było ostatnim
-	if (oldNameDeviceQuantity - 1 < 1) {
-		systemData.devicesTypes[`${selectedDevice.detector.class}s`] = systemData.devicesTypes[`${selectedDevice.detector.class}s`].filter(systemDeviceType => {
-			return systemDeviceType.type !== selectedDevice.detector.type;
-		});
+	const { type: oldType, class: oldClass } = selectedDevice.detector;
+
+	// Zliczenie urządzeń starego typu
+	const oldTypeCount = bus.filter(device => device.detector.type === oldType).length;
+
+	// Usuń stary typ z listy, jeśli był ostatnim
+	if (oldTypeCount <= 1) {
+		devicesTypes[`${oldClass}s`] = devicesTypes[`${oldClass}s`].filter(dev => dev.type !== oldType);
 	}
-	selectedDevice.detector = newDevice;
 
-	// Usunięcie opisu urządzenia, jeśli następuje zmiana z typu TOLED na inny
+	// Ustaw nowe urządzenie
+	selectedDevice.detector = { ...newDevice };
+
+	// Usuń opis dla TOLED
 	if (newDevice.type === "TOLED") {
-		newDevice.description = "";
+		selectedDevice.detector.description = "";
 	}
 
-	if (newDevice.class === "detector") {
-		if (!systemData.devicesTypes.detectors.find(device => device.type === newDevice.type)) {
-			// console.log(newDevice);
-			systemData.devicesTypes.detectors.push(newDevice);
-			// console.log(systemData.devicesTypes);
-		}
-	} else {
-		if (!systemData.devicesTypes.signallers.find((systemTypeDevice, i) => systemTypeDevice.type === newDevice.type)) {
-			systemData.devicesTypes.signallers.push(newDevice);
-		}
+	// Dodaj nowy typ do odpowiedniej listy, jeśli go tam nie ma
+	const classList = devicesTypes[`${newDevice.class}s`];
+	if (!classList.some(dev => dev.type === newDevice.type)) {
+		classList.push(newDevice);
 	}
 }
-
 // Ustawienie nasłuchiwania zdarzeń dot. zmiany typu urządzenia w wybranym segmencie
 function setSegmentDeviceTypeSelectChangeEvent(event, index) {
-	//Urządzenie na jakie chcemy zmienić
+	const selectedValue = event.target.value;
 	const setDeviceName = event.target[event.target.selectedIndex].value;
 	const newDevice = initSystem.selectedStructure.devices.find(device => device.type === setDeviceName);
 
-	//Sprawdzenie które checkboxy są zaznaczone i dla nich zmieniamy urządzenie
 	const checkboxes = document.querySelectorAll(`.segmentCheckbox`);
-	checkboxes.forEach((checkbox, checkboxIndex) => {
+	let anyChecked = false;
+
+	checkboxes.forEach((checkbox, i) => {
 		if (checkbox.checked) {
-			manipulateDataSystem(checkboxIndex + 1, newDevice);
+			// 1. Najpierw zmieniamy dane systemowe:
+			manipulateDataSystem(i + 1, newDevice);
+			anyChecked = true;
 		}
 	});
-	manipulateDataSystem(index, newDevice);
 
-	// updateSystemState();
-	setSystem();
-	updateSegmentSelect();
+	if (!anyChecked) {
+		manipulateDataSystem(index, newDevice);
+	}
 
-	// setSelectValue();
+	// 2. Dopiero po aktualizacji danych odświeżamy UI segmentów:
+	if (anyChecked) {
+		checkboxes.forEach((checkbox, i) => {
+			if (checkbox.checked) {
+				updateSegmentUI(i);
+			}
+		});
+	} else {
+		updateSegmentUI(index);
+	}
+
+	// Ustawienie wartości selecta (opcjonalne, ale może być potrzebne):
+	const refreshedSelect = document.querySelector(`.actionsSegment[data-segmentindex="${index}"] select.segmentDeviceSelect`);
+	if (refreshedSelect) {
+		refreshedSelect.value = selectedValue;
+	}
 }
+//Aktualizacja pojedynczego segmentu UI
+function updateSegmentUI(segmentIndex) {
+	// segmentIndex jest 1-based
 
-// function setSelectValue() {
-// 	const segmentDeviceSelects = document.querySelectorAll(`.segmentDeviceSelect`);
-// 	segmentDeviceSelects.forEach((select, i) => {
-// 		if (i > 0) {
-// 			select.value = systemData.bus[i+1].detector.type;
-// 		}
-// 	});
-// }
+	const segment = document.querySelector(`.actionsSegment[data-segmentindex="${segmentIndex}"]`);
+	if (!segment) return;
 
+	const dataIndex = segmentIndex - 1; // systemData.bus jest 0-based
+	const device = systemData.bus[dataIndex]?.detector;
+	if (!device) return;
+
+	// --- 1. Aktualizacja UI segmentu ---
+	const select = segment.querySelector("select.segmentDeviceSelect");
+	if (select) {
+		select.value = device.type;
+	}
+
+	const deviceTypeWrapper = segment.querySelector(".deviceTypeWrapper");
+	if (device.type === "TOLED") {
+		if (!deviceTypeWrapper.querySelector(".toledDescriptionSelect")) {
+			deviceTypeWrapper.appendChild(createSegmentTOLEDDescriptionSelect());
+		}
+	} else {
+		const toledSelect = deviceTypeWrapper.querySelector(".toledDescriptionSelect");
+		if (toledSelect) {
+			toledSelect.remove();
+		}
+	}
+
+	const wireInput = segment.querySelector("input.segmentWireLength");
+	if (wireInput) {
+		wireInput.value = systemData.bus[dataIndex]?.wireLength || 0;
+	}
+
+	// --- 2. Aktualizacja grafik w kontenerach (querySelectorAll + indeks 0-based) ---
+
+	const detectorImgs = document.querySelectorAll(".detectorImageContainer img");
+	const signallerImgs = document.querySelectorAll(".warningDeviceImageContainer img");
+	const busImgs = document.querySelectorAll(".busImageContainer img");
+
+	const detectorImg = detectorImgs[dataIndex];
+	if (detectorImg) {
+		if (device.class === "detector") {
+			detectorImg.src = `./SVG/${device.type}.svg`;
+			detectorImg.style.visibility = "visible";
+		} else {
+			setAttributes(detectorImg, { src: "", alt: "Detector image" });
+			detectorImg.style.visibility = "hidden";
+		}
+	}
+
+	const signallerImg = signallerImgs[dataIndex];
+	if (signallerImg) {
+		if (device.class === "signaller") {
+			signallerImg.src = `./SVG/${device.type}.svg`;
+			signallerImg.style.visibility = "visible";
+		} else {
+			setAttributes(signallerImg, { src: "", alt: "Detector image" });
+			signallerImg.style.visibility = "hidden";
+		}
+	}
+
+	const busImg = busImgs[dataIndex];
+	if (busImg) {
+		const isDetector = device.class === "detector";
+		busImg.src = `./SVG/${isDetector ? "tconP" : "tconL"}.svg`;
+	}
+
+	// --- 3. Aktualizacja globalnych stanów ---
+	setSystemStateDetectorsList();
+	setSystemStateSignallersList();
+	setSystemStateAccessories();
+	setSystemStateBusLength();
+	setSystemStatePowerConsumption();
+}
 // Tworzenie selecta rodzaju etykiety dla segmentu urządzenia typu TOLED
 function createSegmentTOLEDDescriptionSelect(device) {
-	// Sprawdzenie czy opis urządzenia był wcześniej ustawiony, w przeciwnym wypadku ustawienie domyślnej wartości
-	if (!device.description) {
-		device.description = "WE";
-	}
-	const segmentTOLEDSelectContainer = document.createElement("div");
-	const segmentTOLEDLabel = document.createElement("label");
-	const segmentTOLEDSelectWrapper = document.createElement("div");
-	const segmentTOLEDSelect = document.createElement("select");
-	setAttributes(segmentTOLEDSelectContainer, { class: "toledContainer" });
-	setAttributes(segmentTOLEDLabel, { class: "toledDescription" });
-	setAttributes(segmentTOLEDSelectWrapper, { class: "formSelectInput" });
-	setAttributes(segmentTOLEDSelect, { class: "toledSelect" });
-	segmentTOLEDLabel.appendChild(document.createTextNode("Napis"));
-	segmentTOLEDSelectContainer.appendChild(segmentTOLEDLabel);
-	segmentTOLEDSelectWrapper.appendChild(segmentTOLEDSelect);
-	segmentTOLEDSelectContainer.appendChild(segmentTOLEDSelectWrapper);
-	TOLED_OPTIONS.forEach((option, i) => {
-		const toledOption = document.createElement("option");
-		setAttributes(toledOption, {
-			value: option.type,
-			"data-translate": `${TOLED_OPTIONS[i].translate}`,
-		});
-		document.createTextNode(option.translate);
+	const container = el("div", { class: "toledContainer toledDescriptionSelect" });
+	const label = el("label", { class: "toledDescription" }, TRANSLATION.systemSegmentText[lang]);
+	const wrapper = el("div", { class: "formSelectInput" });
+	const select = el("select", { class: "toledSelect" });
 
-		toledOption.appendChild(document.createTextNode(option.type));
-		if (device.description === option.type) {
-			setAttributes(toledOption, { selected: "selected" });
-		}
-		segmentTOLEDSelect.appendChild(toledOption);
+	TOLED_OPTIONS.forEach(option => {
+		const optionEl = el(
+			"option",
+			{
+				value: option.type[lang],
+				"data-translate": option.translate,
+				selected: option[0],
+			},
+			option.type[lang]
+		);
+		select.appendChild(optionEl);
 	});
 
-	// Nasłuchiwanie zdarzeń dot. zmiany opisu urządzenia typu TOLED
-	segmentTOLEDSelectContainer.addEventListener("change", event => setSegmentTOLEDDescriptionSelectChangeEvent(event, device.index));
-
-	return segmentTOLEDSelectContainer;
-}
-
-// Ustawienie nasłuchiwania zdarzeń dot. zmiany opisu urządzenia typu TOLED
-//USTAWIENIE TOLEDA
-function setSegmentTOLEDDescriptionSelectChangeEvent(event, index) {
-	translate();
-
-	const setDevice = systemData.bus.find(systemDevice => systemDevice.index === index);
-	setDevice.description = event.target[event.target.selectedIndex].value;
+	wrapper.appendChild(select);
+	container.appendChild(label);
+	container.appendChild(wrapper);
+	return container;
 }
 
 // Tworzenie inputa długości kabla (odległości od poprzedniego segmentu) dla segmentu urządzenia
 function createSegmentWireLengthInput(device) {
-	const segmentWireLengthContainer = document.createElement("div");
-	const segmentWireLengthLabel = document.createElement("label");
-	const breakLineElem = document.createElement("br");
-	const segmentWireLengthInput = document.createElement("input");
-	setAttributes(segmentWireLengthContainer, {
-		class: "segmentWireLengthContainer",
-	});
-	setAttributes(segmentWireLengthLabel, {
-		class: "segmentWireLengthLabel",
-		for: `actionsSegmentWireLength${device.index}`,
-		"data-translate": "segmentWireLength",
-	});
-	setAttributes(segmentWireLengthInput, {
+	const container = el("div", { class: "segmentWireLengthContainer" });
+	const label = el(
+		"label",
+		{
+			class: "segmentWireLengthLabel",
+			for: `actionsSegmentWireLength${device.index}`,
+			"data-translate": "segmentWireLength",
+		},
+		TRANSLATION.segmentWireLength[lang]
+	);
+
+	const input = el("input", {
 		class: "segmentWireLength",
 		id: `actionsSegmentWireLength${device.index}`,
 		type: "number",
 		min: 1,
 		value: device.wireLength,
 	});
-	segmentWireLengthLabel.appendChild(document.createTextNode("Odległość do poprzedniego segmentu"));
-	segmentWireLengthContainer.appendChild(segmentWireLengthLabel);
-	segmentWireLengthContainer.appendChild(breakLineElem);
-	segmentWireLengthContainer.appendChild(segmentWireLengthInput);
-	segmentWireLengthContainer.appendChild(document.createTextNode("m"));
-	segmentWireLengthInput.addEventListener("change", event => setSegmentWireLengthInputChangeEvent(event, device.index));
 
-	return segmentWireLengthContainer;
+	container.append(label, el("br"), input, document.createTextNode("m"));
+	return container;
 }
 
 // Ustawienie nasłuchiwania zdarzeń dot. długości kabla (odległości od poprzedniego segmentu) w wybranym segmencie
 function setSegmentWireLengthInputChangeEvent(event, index) {
-	const setDevice = systemData.bus.find(systemDevice => systemDevice.index === index);
-	const newValue = parseInt(event.target.value);
-	if (newValue > 0) {
-		setDevice.wireLength = newValue;
-	} else {
-		setDevice.wireLength = 0;
+	const newValue = parseInt(event.target.value, 10);
+	const wireLength = isNaN(newValue) ? 0 : Math.max(0, newValue);
+
+	const segmentElements = document.querySelectorAll(".deviceSegment");
+
+	segmentElements.forEach((segmentEl, i) => {
+		const checkbox = segmentEl.querySelector(".segmentCheckbox");
+		if (checkbox && checkbox.checked) {
+			const device = systemData.bus.find(d => d.index === i + 1);
+			if (device) {
+				device.wireLength = wireLength;
+			}
+
+			const input = document.querySelector(`#actionsSegment${i + 1} .segmentWireLength`);
+			if (input) {
+				input.value = wireLength;
+			}
+		}
+	});
+
+	// Upewnij się, że zmieniany segment również się aktualizuje
+	const changedDevice = systemData.bus.find(d => d.index === index);
+	if (changedDevice) {
+		changedDevice.wireLength = wireLength;
 	}
+
 	setSystemStateBusLength();
 }
 
 // Tworzenie przycisków akcji dla segmentu urządzenia
 function createSegmentButtons(device) {
-	const segmentButtonsContainer = document.createElement("div");
-	const duplicateDeviceButton = document.createElement("button");
-	const removeDeviceButton = document.createElement("button");
-	setAttributes(segmentButtonsContainer, { class: "segmentButtonsContainer" });
-	setAttributes(duplicateDeviceButton, {
-		class: "duplicateDeviceButton",
-		id: `duplicateDevice${device.index}`,
-	});
-	setAttributes(removeDeviceButton, {
-		class: "removeDeviceButton",
-		id: `removeDevice${device.index}`,
-	});
-	duplicateDeviceButton.appendChild(document.createTextNode("+"));
-	removeDeviceButton.appendChild(document.createTextNode("–"));
-	segmentButtonsContainer.appendChild(duplicateDeviceButton);
-	segmentButtonsContainer.appendChild(removeDeviceButton);
-	duplicateDeviceButton.addEventListener("click", event => setSegmentDuplicateDeviceButtonClickEvent(device.index));
-	removeDeviceButton.addEventListener("click", event => setSegmentRemoveDeviceButtonClickEvent(device.index));
+	const container = el("div", { class: "segmentButtonsContainer" });
+	const duplicateBtn = el(
+		"button",
+		{
+			class: "duplicateDeviceButton",
+			id: `duplicateDevice${device.index}`,
+		},
+		"+"
+	);
+	const removeBtn = el(
+		"button",
+		{
+			class: "removeDeviceButton",
+			id: `removeDevice${device.index}`,
+		},
+		"–"
+	);
 
-	return segmentButtonsContainer;
+	container.append(duplicateBtn, removeBtn);
+	return container;
 }
 
 // Ustawienie nasłuchiwania zdarzeń dot. powielenia segmentu z tymi samymi parametrami
 function setSegmentDuplicateDeviceButtonClickEvent(index) {
-	const duplicatedDevice = structuredClone(systemData.bus.find(systemDevice => systemDevice.index === index));
-	duplicatedDevice.index = index + 1;
-	systemData.bus.forEach(device => {
-		if (device.index > index) {
-			return (device.index += 1);
-		}
-	});
-	systemData.bus.splice(index, 0, duplicatedDevice);
+	const newDevice = structuredClone(systemData.bus.find(d => d.index === index));
+	newDevice.index = index + 1;
 
-	setSystem();
+	systemData.bus.forEach(d => {
+		if (d.index > index) d.index += 1;
+	});
+
+	systemData.bus.splice(index, 0, newDevice);
+	updateSegmentUI(index);
 	updateSegmentSelect();
 }
 
 // Ustawienie nasłuchiwania zdarzeń dot. usunięcia segmentu
 function setSegmentRemoveDeviceButtonClickEvent(index) {
-	const setDevice = systemData.bus.find(systemDevice => systemDevice.index === index);
-	const oldNameDeviceQuantity = systemData.bus.reduce((accumulator, setDeviceType) => {
-		if (setDeviceType.name === setDevice.name) {
-			return accumulator + 1;
-		} else {
-			return accumulator;
-		}
-	}, 0);
-	// Usunięcie typu urządzenia z listy wykorzystywanych w systemie, jeśli wybrane było ostatnim
-	if (oldNameDeviceQuantity - 1 < 1) {
-		const type = setDevice.type;
-		systemData.devicesTypes[`${type}s`] = systemData.devicesTypes[`${type}s`].filter(systemDeviceType => {
-			return systemDeviceType.name !== setDevice.name;
-		});
+	const device = systemData.bus.find(d => d.index === index);
+
+	const sameTypeCount = systemData.bus.filter(d => d.detector.type === device.detector.type).length;
+	if (sameTypeCount <= 1) {
+		const typeList = systemData.devicesTypes[`${device.detector.class}s`];
+		systemData.devicesTypes[`${device.detector.class}s`] = typeList.filter(t => t.type !== device.detector.type);
 	}
 
-	systemData.bus.splice(setDevice.index - 1, 1);
-	if (systemData.bus.length > 0) {
-		systemData.bus.forEach(device => {
-			if (device.index > setDevice.index) {
-				return (device.index -= 1);
-			}
-		});
-	}
-	setSystem();
+	systemData.bus = systemData.bus.filter(d => d.index !== index);
+	systemData.bus.forEach(d => {
+		if (d.index > index) d.index -= 1;
+	});
+	updateSegmentUI(index);
 }
 
 // Tworzenie panelu działań dla segmentu jednostki sterującej
 function createSegmentActionsPSU() {
-	const actionsSegment = document.createElement("div");
-	const wrapper = document.createElement("div");
-	const segmentIndexLabel = document.createElement("label");
-	const segmentDeviceLabel = document.createElement("label");
-	const breakLineElem = document.createElement("br");
-	setAttributes(actionsSegment, {
+	const actionsSegment = el("div", {
 		class: "actionsSegment",
 		id: "actionsSegment0",
 		"data-segmentType": "PSU",
 		"data-segmentIndex": "0",
 	});
-	setAttributes(wrapper, { class: "wrapper" });
-	setAttributes(segmentIndexLabel, {
-		class: "segmentIndexLabel",
-		for: "actionsSegmentIndex0",
-	});
-	segmentIndexLabel.appendChild(document.createTextNode("Segment nr "));
-	segmentDeviceLabel.appendChild(document.createTextNode("Urządzenie"));
-	setAttributes(segmentDeviceLabel, {
-		class: "segmentDeviceLabel",
-		for: "actionsSegmentDevice0",
-		id: "segmentDeviceLabel",
-		for: "actionsSegmentDevice0",
-	});
 
-	const segmentIndexInput = document.createElement("input");
-	const segmentDeviceInput = document.createElement("input");
-	setAttributes(segmentIndexInput, {
+	const wrapper = el("div", { class: "wrapper" });
+
+	const segmentIndexLabel = el(
+		"label",
+		{
+			class: "segmentIndexLabel",
+			for: "actionsSegmentIndex0",
+		},
+		"Segment nr "
+	);
+
+	const segmentIndexInput = el("input", {
 		class: "segmentId",
 		id: "actionsSegmentIndex0",
 		type: "number",
@@ -510,19 +536,29 @@ function createSegmentActionsPSU() {
 		value: 0,
 		disabled: true,
 	});
-	setAttributes(segmentDeviceInput, {
+
+	segmentIndexLabel.appendChild(segmentIndexInput);
+
+	const segmentDeviceLabel = el(
+		"label",
+		{
+			class: "segmentDeviceLabel",
+			id: "segmentDeviceLabel",
+			for: "actionsSegmentDevice0",
+		},
+		TRANSLATION.systemSegmentDescription[lang]
+	);
+
+	const segmentDeviceInput = el("input", {
 		class: "segmentDeviceSelect",
 		id: "actionsSegmentDevice0",
 		value: systemData.supplyType,
 	});
-	segmentIndexLabel.appendChild(segmentIndexInput);
-	segmentDeviceLabel.appendChild(breakLineElem);
-	segmentDeviceLabel.appendChild(segmentDeviceInput);
 
+	segmentDeviceLabel.append(el("br"), segmentDeviceInput);
+
+	wrapper.append(segmentIndexLabel, segmentDeviceLabel);
 	actionsSegment.appendChild(wrapper);
-	wrapper.appendChild(segmentIndexLabel);
-	wrapper.appendChild(segmentDeviceLabel);
-
 	return actionsSegment;
 }
 
@@ -536,117 +572,52 @@ function setSystemStatePanel() {
 }
 
 function setDetectorQuantity(detector) {
-	const quantity = systemData.bus.reduce((accumulator, device) => {
-		if (detector.gasDetected === device.detector.gasDetected) {
-			return accumulator + 1;
-		} else {
-			return accumulator;
-		}
-	}, 0);
-	return quantity;
+	return systemData.bus.filter(d => d.detector.gasDetected === detector.gasDetected).length;
 }
-
 function setSignallerQuantity(signaller) {
-	const quantity = systemData.bus.reduce((accumulator, device) => {
-		if (signaller.type === device.detector.type) {
-			return accumulator + 1;
-		} else {
-			return accumulator;
-		}
-	}, 0);
-	return quantity;
-}
-
-function updateDevicesOnBus() {
-	const selectDeviceImgContainers = document.querySelectorAll(`.detectorImageContainer img`);
-	selectDeviceImgContainers.forEach((element, i) => {
-		if (systemData.bus[i].detector.class === `detector`) {
-			element.setAttribute(`src`, `./SVG/${systemData.bus[i].detector.type}.svg`);
-			element.style.visibility = "visible";
-		} else {
-			setAttributes(element, { src: "", alt: "Detector image" });
-			element.style.visibility = "hidden";
-		}
-	});
-}
-
-function updateSignallersOnBus() {
-	const warningDeviceImgContainers = document.querySelectorAll(`.warningDeviceImageContainer img`);
-	warningDeviceImgContainers.forEach((element, i) => {
-		if (systemData.bus[i].detector.class === `signaller`) {
-			element.setAttribute(`src`, `./SVG/${systemData.bus[i].detector.type}.svg`);
-			element.style.visibility = "visible";
-		} else {
-			setAttributes(element, { src: "", alt: "Detector image" });
-			element.style.visibility = "hidden";
-		}
-	});
-}
-
-function updateBus() {
-	const selectBusImageContainers = document.querySelectorAll(`.busImageContainer img`);
-	selectBusImageContainers.forEach((element, i) =>
-		systemData.bus[i].detector.class === `detector` ? element.setAttribute(`src`, `./SVG/tconP.svg`) : element.setAttribute(`src`, `./SVG/tconL.svg`)
-	);
-}
-
-function updateDetectorList() {
-	const detectorList = document.querySelectorAll(`.detectorsList li`);
-	detectorList.forEach(item => console.log(item.text));
-	console.log(detectorList);
-}
-
-function updateSegmentSelect() {
-	const selects = document.querySelectorAll(`[data-segmenttype="detectors"] select`);
-	selects.forEach((select, i) => (select.value = systemData.bus[i].detector.type));
-}
-
-// function updateSystemState() {
-// 	setSystemStateDetectorsList();
-// 	setSystemStateAccessories();
-// 	setSystemStateSignallersList();
-
-// 	updateBus();
-// 	updateDevicesOnBus();
-// 	updateSignallersOnBus();
-// 	updateSegmentSelect();
-// 	createSystemUsedDevicesPanel();
-// }
-
-function checkAllCheckboxes() {
-	const checkAllButton = document.querySelector(`.checkAll`);
-	const checkboxes = document.querySelectorAll(`.segmentCheckbox`);
-	checkAllButton.addEventListener(`click`, () => {
-		checkboxes.forEach(checkbox => (checkbox.checked = 1));
-	});
-}
-
-function deselectAllCheckboxes() {
-	const deselectAllButton = document.querySelector(`.unCheckAll`);
-	const checkboxes = document.querySelectorAll(`.segmentCheckbox`);
-	deselectAllButton.addEventListener(`click`, () => {
-		checkboxes.forEach(checkbox => (checkbox.checked = 0));
-	});
+	return systemData.bus.filter(d => d.detector.type === signaller.type).length;
 }
 
 // Ustawienie typów gazu mierzonych przez wybrane czujniki + liczebności tych czujników w panelu stanu
 function setSystemStateDetectorsList() {
 	const detectorsList = document.getElementById("detectorsList");
-	detectorsList.replaceChildren();
-	systemData.devicesTypes.detectors.forEach(detector => {
-		const detectorListItem = document.createElement("li");
-		const detectorTypeContainer = document.createElement("div");
-		const detectorQuantityContainer = document.createElement("div");
-		const detectorQuantity = document.createElement("span");
-		const quantity = setDetectorQuantity(detector);
-		detectorTypeContainer.appendChild(document.createTextNode(detector.gasDetected));
-		detectorQuantity.appendChild(document.createTextNode(quantity));
-		detectorQuantityContainer.appendChild(detectorQuantity);
-		detectorQuantityContainer.appendChild(document.createTextNode("szt."));
-		detectorListItem.appendChild(detectorTypeContainer);
-		detectorListItem.appendChild(detectorQuantityContainer);
-		detectorsList.appendChild(detectorListItem);
+	const detectors = systemData.devicesTypes.detectors;
+	const existingItems = Array.from(detectorsList.children);
+
+	const existingMap = new Map();
+	existingItems.forEach(li => {
+		const gas = li.querySelector("div:first-child")?.textContent;
+		if (gas) existingMap.set(gas, li);
 	});
+
+	detectors.forEach(detector => {
+		const quantity = setDetectorQuantity(detector);
+		if (existingMap.has(detector.gasDetected)) {
+			const li = existingMap.get(detector.gasDetected);
+			const quantitySpan = li.querySelector("div:nth-child(2) span");
+			if (quantitySpan.textContent !== String(quantity)) {
+				quantitySpan.textContent = quantity;
+			}
+			existingMap.delete(detector.gasDetected);
+		} else {
+			const detectorListItem = document.createElement("li");
+			const detectorTypeContainer = document.createElement("div");
+			const detectorQuantityContainer = document.createElement("div");
+			const detectorQuantity = document.createElement("span");
+
+			detectorTypeContainer.textContent = detector.gasDetected;
+			detectorQuantity.textContent = quantity;
+
+			detectorQuantityContainer.appendChild(detectorQuantity);
+			detectorQuantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
+			detectorListItem.appendChild(detectorTypeContainer);
+			detectorListItem.appendChild(detectorQuantityContainer);
+			detectorsList.appendChild(detectorListItem);
+		}
+	});
+
+	// Usuń niepotrzebne
+	existingMap.forEach(li => detectorsList.removeChild(li));
 }
 
 function createListItem(label, count) {
@@ -658,7 +629,7 @@ function createListItem(label, count) {
 	signallerTypeContainer.textContent = label;
 	signallerQuantity.textContent = count;
 	signallerQuantityContainer.appendChild(signallerQuantity);
-	signallerQuantityContainer.appendChild(document.createTextNode(" szt."));
+	signallerQuantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
 	signallerListItem.appendChild(signallerTypeContainer);
 	signallerListItem.appendChild(signallerQuantityContainer);
 
@@ -668,56 +639,103 @@ function createListItem(label, count) {
 // Ustawienie rodzajów sygnalizatorów + ich liczebności w panelu stanu
 function setSystemStateSignallersList() {
 	const signallersList = document.getElementById("signallersList");
-	signallersList.replaceChildren();
+	const existingItems = Array.from(signallersList.children);
 
+	// Zliczanie sygnalizatorów według typu
 	let toledCount = 0;
 	let otherCount = 0;
-
 	systemData.bus.forEach(device => {
-		if (device.detector.type === "TOLED") {
-			toledCount++;
-		} else if (device.detector.type === `Teta SOLERT` || device.detector.type === `Teta SZOA`) {
-			otherCount++;
+		if (device.detector.type === "TOLED") toledCount++;
+		else if (device.detector.type === "Teta SOLERT" || device.detector.type === "Teta SZOA") otherCount++;
+	});
+
+	const expected = new Map();
+	if (toledCount > 0) expected.set("Tablica ostrzegawcza", toledCount);
+	if (otherCount > 0) expected.set("Optyczno-akustyczne", otherCount);
+
+	// Mapowanie istniejących li po labelu
+	const existingMap = new Map();
+	existingItems.forEach(li => {
+		const label = li.querySelector("div:first-child")?.textContent;
+		if (label) existingMap.set(label, li);
+	});
+
+	// Aktualizuj lub dodaj
+	expected.forEach((count, label) => {
+		if (existingMap.has(label)) {
+			const li = existingMap.get(label);
+			const quantitySpan = li.querySelector("div:nth-child(2) span");
+			if (quantitySpan.textContent !== String(count)) quantitySpan.textContent = count;
+			existingMap.delete(label);
+		} else {
+			signallersList.appendChild(createListItem(label, count));
 		}
 	});
-	if (toledCount > 0) {
-		const toledItem = createListItem("Tablica ostrzegawcza", toledCount);
-		signallersList.appendChild(toledItem);
-	}
-	if (otherCount > 0) {
-		const otherItem = createListItem("Optyczno-akustyczne", otherCount);
-		signallersList.appendChild(otherItem);
-	}
+
+	// Usuń zbędne
+	existingMap.forEach(li => signallersList.removeChild(li));
 }
 
 // Ustawienie akcesoriów + ich liczebności w panelu stanu
 function setSystemStateAccessories() {
 	const accessoriesList = document.getElementById("accessoriesList");
-	accessoriesList.replaceChildren();
-	const accessoryListItem = document.createElement("li");
-	const accessoryTypeContainer = document.createElement("div");
-	const accessoryQuantityContainer = document.createElement("div");
-	const accessoryQuantity = document.createElement("span");
-	accessoryTypeContainer.appendChild(document.createTextNode("T-Konektor"));
-	accessoryQuantity.appendChild(document.createTextNode(systemData.bus.length));
-	accessoryQuantityContainer.appendChild(accessoryQuantity);
-	accessoryQuantityContainer.appendChild(document.createTextNode("szt."));
-	accessoryListItem.appendChild(accessoryTypeContainer);
-	accessoryListItem.appendChild(accessoryQuantityContainer);
-	accessoriesList.appendChild(accessoryListItem);
+	const existingItems = Array.from(accessoriesList.children);
+	const totalCount = systemData.bus.length;
+	const label = "T-Konektor";
+
+	let accessoryItem = null;
+
+	// Szukamy istniejącego elementu
+	for (const li of existingItems) {
+		const text = li.querySelector("div:first-child")?.textContent;
+		if (text === label) {
+			accessoryItem = li;
+			break;
+		}
+	}
+
+	if (accessoryItem) {
+		// Aktualizujemy liczbę, jeśli się zmieniła
+		const quantitySpan = accessoryItem.querySelector("div:nth-child(2) span");
+		if (quantitySpan.textContent !== String(totalCount)) {
+			quantitySpan.textContent = totalCount;
+		}
+		// Usuwamy inne elementy (jeśli jakieś są)
+		existingItems.forEach(li => {
+			if (li !== accessoryItem) accessoriesList.removeChild(li);
+		});
+	} else {
+		// Tworzymy nowy element
+		accessoriesList.replaceChildren(); // Czyścimy, bo jest tylko 1 element
+		const accessoryListItem = document.createElement("li");
+		const accessoryTypeContainer = document.createElement("div");
+		const accessoryQuantityContainer = document.createElement("div");
+		const accessoryQuantity = document.createElement("span");
+
+		accessoryTypeContainer.textContent = label;
+		accessoryQuantity.textContent = totalCount;
+		accessoryQuantityContainer.appendChild(accessoryQuantity);
+		accessoryQuantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
+		accessoryListItem.appendChild(accessoryTypeContainer);
+		accessoryListItem.appendChild(accessoryQuantityContainer);
+		accessoriesList.appendChild(accessoryListItem);
+	}
 }
 
 // Ustawienie długości magistrali w panelu stanu
 function setSystemStateBusLength() {
 	const busLength = document.getElementById("busLength");
-	const busLengthValue = systemData.bus.reduce((accumulator, device) => accumulator + device.wireLength, 0);
-	busLength.replaceChildren(busLength.appendChild(document.createTextNode(busLengthValue)));
+	const busLengthValue = systemData.bus.reduce((acc, device) => acc + device.wireLength, 0);
+	if (busLength.textContent !== String(busLengthValue)) {
+		busLength.textContent = busLengthValue;
+	}
 }
-
 // Ustawienie wartości zużycia energii dla systemu w panelu stanu
 function setSystemStatePowerConsumption(value = 25) {
 	const powerConsumption = document.getElementById("powerConsumption");
-	powerConsumption.replaceChildren(powerConsumption.appendChild(document.createTextNode(value)));
+	if (powerConsumption.textContent !== String(value)) {
+		powerConsumption.textContent = value;
+	}
 }
 
 // Tworzenie panelu z listą rodzajów wykorzystanych w systemie urządzeń
@@ -766,8 +784,8 @@ function setSystemUsedPSU(supplyType) {
 		alt: `control unit image`,
 	});
 	systemUsedPSUName.appendChild(document.createTextNode(supplyType));
-	systemUsedPSUType.appendChild(document.createTextNode("Moduł Jednostki Sterującej"));
-	systemUsedPSUDocsLink.appendChild(document.createTextNode("Dokumentacja techniczna"));
+	systemUsedPSUType.appendChild(document.createTextNode(`${TRANSLATION.controlUnitModule[lang]}`));
+	systemUsedPSUDocsLink.appendChild(document.createTextNode(`${TRANSLATION.appliedDevicesDocTech[lang]}`));
 	systemUsedPSUDataContainer.appendChild(systemUsedPSUName);
 	systemUsedPSUDataContainer.appendChild(systemUsedPSUType);
 	systemUsedPSUDataContainer.appendChild(systemUsedPSUBreak);
@@ -806,14 +824,14 @@ function setSystemUsedDevice(device, isSignaller = false) {
 	});
 	systemUsedDeviceName.appendChild(document.createTextNode(device.type));
 	if (!isSignaller) {
-		systemUsedDeviceType.appendChild(document.createTextNode(`Czujnik gazu ${device.gasDetected}`));
+		systemUsedDeviceType.appendChild(document.createTextNode(`${TRANSLATION.deviceDescription[lang]} ${device.gasDetected}`));
 	} else {
-		systemUsedDeviceType.appendChild(document.createTextNode("Sygnalizator opt.-aku."));
+		systemUsedDeviceType.appendChild(document.createTextNode(`${TRANSLATION.signallerDescription[lang]}`));
 	}
 	systemUsedDeviceDataContainer.appendChild(systemUsedDeviceName);
 	systemUsedDeviceDataContainer.appendChild(systemUsedDeviceType);
 	systemUsedDeviceDataContainer.appendChild(systemUsedDeviceBreak);
-	if (device.type === "Teta EcoWent + MiniDet") {
+	if (device.type === "Teta EcoWent+MiniDet") {
 		const systemUsedDeviceDocsLink1 = document.createElement("a");
 		const systemUsedDeviceDocsLink2 = document.createElement("a");
 		setAttributes(systemUsedDeviceDocsLink1, {
@@ -828,8 +846,8 @@ function setSystemUsedDevice(device, isSignaller = false) {
 			href: "https://www.atestgaz.pl/produkt/czujnik-gazu-teta-minidet",
 			target: "_blank",
 		});
-		// systemUsedDeviceDocsLink1.appendChild(document.createTextNode("Dokumentacja techniczna dla CO"));
-		// systemUsedDeviceDocsLink2.appendChild(document.createTextNode("Dokumentacja techniczna dla LPG"));
+		systemUsedDeviceDocsLink1.appendChild(document.createTextNode(`${TRANSLATION.appliedDevicesDocTech[lang]} CO`));
+		systemUsedDeviceDocsLink2.appendChild(document.createTextNode(`${TRANSLATION.appliedDevicesDocTech[lang]} LPG`));
 		systemUsedDeviceDataContainer.appendChild(systemUsedDeviceDocsLink1);
 		systemUsedDeviceDataContainer.appendChild(systemUsedDeviceDocsLink2);
 	} else {
@@ -840,7 +858,7 @@ function setSystemUsedDevice(device, isSignaller = false) {
 			target: "_blank",
 			"data-translate": "appliedDevicesDocTech",
 		});
-		systemUsedDeviceDocsLink.appendChild(document.createTextNode("Dokumentacja techniczna"));
+		systemUsedDeviceDocsLink.appendChild(document.createTextNode(`${TRANSLATION.appliedDevicesDocTech[lang]}`));
 		systemUsedDeviceDataContainer.appendChild(systemUsedDeviceDocsLink);
 	}
 	systemUsedDeviceImageContainer.appendChild(systemUsedDeviceImage);
@@ -850,14 +868,63 @@ function setSystemUsedDevice(device, isSignaller = false) {
 	return systemUsedDevice;
 }
 
+function setupSystemEventHandlers() {
+	const container = document.getElementById("systemContainer") || document;
+
+	container.addEventListener("change", event => {
+		const sel = event.target;
+		const segmentEl = sel.closest(".actionsSegment");
+		if (!segmentEl) return;
+		const index = parseInt(segmentEl.dataset.segmentindex, 10);
+		if (sel.matches("select.segmentDeviceSelect")) {
+			setSegmentDeviceTypeSelectChangeEvent(event, index);
+			if (event.target.value === "TOLED") {
+				const segmentEl = document.querySelector(`.actionsSegment[data-segmentindex="${index}"]`);
+				const deviceTypeWrapper = segmentEl.querySelector(`.deviceTypeWrapper`);
+
+				// Tylko jeśli nie ma już tego pola
+				if (!deviceTypeWrapper.querySelector(".toledDescriptionSelect")) {
+					deviceTypeWrapper.appendChild(createSegmentTOLEDDescriptionSelect());
+				}
+				updateSegmentUI(index);
+			}
+		} else if (sel.matches("input.segmentWireLength")) {
+			setSegmentWireLengthInputChangeEvent(event, index);
+			updateSegmentUI(index);
+		} else if (sel.matches("input.segmentCheckbox")) {
+		}
+	});
+
+	container.addEventListener("click", event => {
+		const btn = event.target;
+		const segmentEl = btn.closest(".actionsSegment");
+		let index = segmentEl ? parseInt(segmentEl.dataset.segmentindex, 10) : null;
+
+		if (btn.matches("button.duplicateDeviceButton")) {
+			setSegmentDuplicateDeviceButtonClickEvent(index);
+			updateSegmentUI(index + 1);
+		}
+		// Usunięcie segmentu
+		else if (btn.matches("button.removeDeviceButton")) {
+			setSegmentRemoveDeviceButtonClickEvent(index);
+		}
+		// Zaznacz wszystkie
+		else if (btn.matches(".checkAll")) {
+			document.querySelectorAll(".segmentCheckbox").forEach(cb => (cb.checked = true));
+		}
+		// Odznacz wszystkie
+		else if (btn.matches(".unCheckAll")) {
+			document.querySelectorAll(".segmentCheckbox").forEach(cb => (cb.checked = false));
+		}
+	});
+}
+
 // Tworzenie systemu
 function setSystem() {
 	createSystemDiagram();
 	createSystemSegmentsActionsList();
-	setSystemStatePanel();
 	createSystemUsedDevicesPanel();
-	checkAllCheckboxes();
-	deselectAllCheckboxes();
+	setSystemStatePanel();
 }
 
 // Ustawienie nasłuchiwania zdarzeń dot. eksportu systemu do pliku CSV
