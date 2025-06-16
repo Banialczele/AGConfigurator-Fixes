@@ -1,26 +1,11 @@
 // Inicjacja głównego obiektu z danymi systemu
-function createSystemData(fileData = null) {
+function createSystemDataFromAFile(fileData = null) {
 	if (fileData) {
 		systemData.supplyType = fileData.supplyType;
 		systemData.structureType = fileData.structureType;
 		systemData.bus = fileData.bus;
 		systemData.batteryBackUp = fileData.batteryBackUp;
 		systemData.devicesTypes = fileData.devicesTypes;
-	} else {
-		systemData.devicesTypes = { detectors: [], signallers: [] };
-		systemData.bus = [];
-		systemData.supplyType = initSystem.supplyType;
-		systemData.structureType = initSystem.structureType;
-		systemData.batteryBackUp = initSystem.batteryBackUp;
-		systemData.devicesTypes.detectors.push(initSystem.detector);
-		for (let i = 0; i < initSystem.amountOfDetectors; i++) {
-			systemData.bus.push({
-				index: i + 1,
-				detector: initSystem.detector,
-				wireLength: initSystem.EWL,
-				description: "",
-			});
-		}
 	}
 }
 
@@ -229,32 +214,47 @@ function createSegmentDeviceTypeSelect(device) {
 function manipulateDataSystem(index, newDevice) {
 	const bus = systemData.bus;
 	const devicesTypes = systemData.devicesTypes;
+	const { toledCount, otherCount } = signallerCount();
+	const signallerAmount = toledCount + otherCount;
 
-	const selectedDevice = bus.find(el => el.index === index);
-	if (!selectedDevice) return;
+	try {
+		if (signallerAmount < 26) {
+			const selectedDevice = bus.find(el => el.index === index);
+			if (!selectedDevice) return;
 
-	const { type: oldType, class: oldClass } = selectedDevice.detector;
+			const { type: oldType, class: oldClass } = selectedDevice.detector;
 
-	// Zliczenie urządzeń starego typu
-	const oldTypeCount = bus.filter(device => device.detector.type === oldType).length;
+			// Zliczenie urządzeń starego typu
+			const oldTypeCount = bus.filter(device => device.detector.type === oldType).length;
 
-	// Usuń stary typ z listy, jeśli był ostatnim
-	if (oldTypeCount <= 1) {
-		devicesTypes[`${oldClass}s`] = devicesTypes[`${oldClass}s`].filter(dev => dev.type !== oldType);
-	}
+			// Usuń stary typ z listy, jeśli był ostatnim
+			if (oldTypeCount <= 1) {
+				devicesTypes[`${oldClass}s`] = devicesTypes[`${oldClass}s`].filter(dev => dev.type !== oldType);
+			}
 
-	// Ustaw nowe urządzenie
-	selectedDevice.detector = { ...newDevice };
+			// Ustaw nowe urządzenie
+			//kopiowanie wartości obiektu newDevice do selectedDevice.detector
+			selectedDevice.detector = { ...newDevice };
 
-	// Usuń opis dla TOLED
-	if (newDevice.type === "TOLED") {
-		selectedDevice.detector.description = "";
-	}
+			// Usuń opis dla TOLED
+			if (newDevice.type === "TOLED") {
+				selectedDevice.detector.description = "";
+			}
 
-	// Dodaj nowy typ do odpowiedniej listy, jeśli go tam nie ma
-	const classList = devicesTypes[`${newDevice.class}s`];
-	if (!classList.some(dev => dev.type === newDevice.type)) {
-		classList.push(newDevice);
+			// Dodaj nowy typ do odpowiedniej listy, jeśli go tam nie ma
+			const classList = devicesTypes[`${newDevice.class}s`];
+			if (!classList.some(dev => dev.type === newDevice.type)) {
+				classList.push(newDevice);
+			}
+		} else {
+			throw new Error("Za dużo sygnalizatorów! MAX 26SZT!");
+		}
+	} catch (error) {
+		const popupcontainer = document.querySelector(".popupContainer");
+		const popupParagraphText = document.querySelector(".popupParagraphText");
+		popupcontainer.classList.add("popupContainerToggle");
+		popupcontainer.classList.add("panelContainer");
+		popupParagraphText.innerHTML = error;
 	}
 }
 // Ustawienie nasłuchiwania zdarzeń dot. zmiany typu urządzenia w wybranym segmencie
@@ -278,31 +278,19 @@ function setSegmentDeviceTypeSelectChangeEvent(event, index) {
 		manipulateDataSystem(index, newDevice);
 	}
 
-	// 2. Dopiero po aktualizacji danych odświeżamy UI segmentów:
 	if (anyChecked) {
 		checkboxes.forEach((checkbox, i) => {
 			if (checkbox.checked) {
-				updateSegmentUI(i);
+				updateSegmentUI(i + 1);
 			}
 		});
 	} else {
 		updateSegmentUI(index);
 	}
-
-	// Ustawienie wartości selecta (opcjonalne, ale może być potrzebne):
-	const refreshedSelect = document.querySelector(`.actionsSegment[data-segmentindex="${index}"] select.segmentDeviceSelect`);
-	if (refreshedSelect) {
-		refreshedSelect.value = selectedValue;
-	}
 }
-//Aktualizacja pojedynczego segmentu UI
-function updateSegmentUI(segmentIndex) {
-	// segmentIndex jest 1-based
 
-	const segment = document.querySelector(`.actionsSegment[data-segmentindex="${segmentIndex}"]`);
-	if (!segment) return;
-
-	const dataIndex = segmentIndex - 1; // systemData.bus jest 0-based
+function updateDeviceSelect(segment, index) {
+	const dataIndex = index - 1; // systemData.bus jest 0-based
 	const device = systemData.bus[dataIndex]?.detector;
 	if (!device) return;
 
@@ -328,13 +316,9 @@ function updateSegmentUI(segmentIndex) {
 	if (wireInput) {
 		wireInput.value = systemData.bus[dataIndex]?.wireLength || 0;
 	}
+}
 
-	// --- 2. Aktualizacja grafik w kontenerach (querySelectorAll + indeks 0-based) ---
-
-	const detectorImgs = document.querySelectorAll(".detectorImageContainer img");
-	const signallerImgs = document.querySelectorAll(".warningDeviceImageContainer img");
-	const busImgs = document.querySelectorAll(".busImageContainer img");
-
+function updateDeviceImage(detectorImgs, busImgs, dataIndex, device) {
 	const detectorImg = detectorImgs[dataIndex];
 	if (detectorImg) {
 		if (device.class === "detector") {
@@ -346,6 +330,14 @@ function updateSegmentUI(segmentIndex) {
 		}
 	}
 
+	const busImg = busImgs[dataIndex];
+	if (busImg) {
+		const isDetector = device.class === "detector";
+		busImg.src = `./SVG/${isDetector ? "tconP" : "tconL"}.svg`;
+	}
+}
+
+function updateSignallerImage(signallerImgs, busImgs, dataIndex, device) {
 	const signallerImg = signallerImgs[dataIndex];
 	if (signallerImg) {
 		if (device.class === "signaller") {
@@ -362,14 +354,31 @@ function updateSegmentUI(segmentIndex) {
 		const isDetector = device.class === "detector";
 		busImg.src = `./SVG/${isDetector ? "tconP" : "tconL"}.svg`;
 	}
+}
 
-	// --- 3. Aktualizacja globalnych stanów ---
+// //Aktualizacja pojedynczego segmentu UI
+function updateSegmentUI(segmentIndex) {
+	// segmentIndex jest 1-based
+
+	const segment = document.querySelector(`.actionsSegment[data-segmentindex="${segmentIndex}"]`);
+	if (!segment) return;
+
+	const device = systemData.bus[segmentIndex - 1]?.detector;
+
+	const detectorImgs = document.querySelectorAll(".detectorImageContainer img");
+	const signallerImgs = document.querySelectorAll(".warningDeviceImageContainer img");
+	const busImgs = document.querySelectorAll(".busImageContainer img");
+
+	updateDeviceImage(detectorImgs, busImgs, segmentIndex - 1, device);
+	updateSignallerImage(signallerImgs, busImgs, segmentIndex - 1, device);
+
 	setSystemStateDetectorsList();
 	setSystemStateSignallersList();
 	setSystemStateAccessories();
 	setSystemStateBusLength();
 	setSystemStatePowerConsumption();
 }
+
 // Tworzenie selecta rodzaju etykiety dla segmentu urządzenia typu TOLED
 function createSegmentTOLEDDescriptionSelect(device) {
 	const container = el("div", { class: "toledContainer toledDescriptionSelect" });
@@ -487,7 +496,6 @@ function setSegmentDuplicateDeviceButtonClickEvent(index) {
 
 	systemData.bus.splice(index, 0, newDevice);
 	updateSegmentUI(index);
-	updateSegmentSelect();
 }
 
 // Ustawienie nasłuchiwania zdarzeń dot. usunięcia segmentu
@@ -574,73 +582,60 @@ function setSystemStatePanel() {
 function setDetectorQuantity(detector) {
 	return systemData.bus.filter(d => d.detector.gasDetected === detector.gasDetected).length;
 }
-function setSignallerQuantity(signaller) {
-	return systemData.bus.filter(d => d.detector.type === signaller.type).length;
-}
 
-// Ustawienie typów gazu mierzonych przez wybrane czujniki + liczebności tych czujników w panelu stanu
-function setSystemStateDetectorsList() {
-	const detectorsList = document.getElementById("detectorsList");
-	const detectors = systemData.devicesTypes.detectors;
-	const existingItems = Array.from(detectorsList.children);
+function updateSystemList(listId, expectedMap) {
+	const list = document.getElementById(listId);
+	const existingItems = Array.from(list.children);
 
 	const existingMap = new Map();
 	existingItems.forEach(li => {
-		const gas = li.querySelector("div:first-child")?.textContent;
-		if (gas) existingMap.set(gas, li);
+		const label = li.querySelector("div:first-child")?.textContent;
+		if (label) existingMap.set(label, li);
 	});
 
-	detectors.forEach(detector => {
-		const quantity = setDetectorQuantity(detector);
-		if (existingMap.has(detector.gasDetected)) {
-			const li = existingMap.get(detector.gasDetected);
+	expectedMap.forEach((quantity, label) => {
+		if (existingMap.has(label)) {
+			const li = existingMap.get(label);
 			const quantitySpan = li.querySelector("div:nth-child(2) span");
 			if (quantitySpan.textContent !== String(quantity)) {
 				quantitySpan.textContent = quantity;
 			}
-			existingMap.delete(detector.gasDetected);
+			existingMap.delete(label);
 		} else {
-			const detectorListItem = document.createElement("li");
-			const detectorTypeContainer = document.createElement("div");
-			const detectorQuantityContainer = document.createElement("div");
-			const detectorQuantity = document.createElement("span");
-
-			detectorTypeContainer.textContent = detector.gasDetected;
-			detectorQuantity.textContent = quantity;
-
-			detectorQuantityContainer.appendChild(detectorQuantity);
-			detectorQuantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
-			detectorListItem.appendChild(detectorTypeContainer);
-			detectorListItem.appendChild(detectorQuantityContainer);
-			detectorsList.appendChild(detectorListItem);
+			list.appendChild(createListItem(label, quantity));
 		}
 	});
 
-	// Usuń niepotrzebne
-	existingMap.forEach(li => detectorsList.removeChild(li));
+	existingMap.forEach(li => list.removeChild(li));
+}
+
+// Ustawienie typów gazu mierzonych przez wybrane czujniki + liczebności tych czujników w panelu stanu
+function setSystemStateDetectorsList() {
+	const detectors = systemData.devicesTypes.detectors;
+	const expected = new Map();
+	detectors.forEach(detector => {
+		expected.set(detector.gasDetected, setDetectorQuantity(detector));
+	});
+	updateSystemList("detectorsList", expected);
 }
 
 function createListItem(label, count) {
-	const signallerListItem = document.createElement("li");
-	const signallerTypeContainer = document.createElement("div");
-	const signallerQuantityContainer = document.createElement("div");
-	const signallerQuantity = document.createElement("span");
+	const listItem = document.createElement("li");
+	const typeContainer = document.createElement("div");
+	const quantityContainer = document.createElement("div");
+	const quantity = document.createElement("span");
 
-	signallerTypeContainer.textContent = label;
-	signallerQuantity.textContent = count;
-	signallerQuantityContainer.appendChild(signallerQuantity);
-	signallerQuantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
-	signallerListItem.appendChild(signallerTypeContainer);
-	signallerListItem.appendChild(signallerQuantityContainer);
+	typeContainer.textContent = label;
+	quantity.textContent = count;
+	quantityContainer.appendChild(quantity);
+	quantityContainer.appendChild(document.createTextNode(`${TRANSLATION.quantity[lang]}`));
+	listItem.appendChild(typeContainer);
+	listItem.appendChild(quantityContainer);
 
-	return signallerListItem;
+	return listItem;
 }
 
-// Ustawienie rodzajów sygnalizatorów + ich liczebności w panelu stanu
-function setSystemStateSignallersList() {
-	const signallersList = document.getElementById("signallersList");
-	const existingItems = Array.from(signallersList.children);
-
+function signallerCount() {
 	// Zliczanie sygnalizatorów według typu
 	let toledCount = 0;
 	let otherCount = 0;
@@ -649,32 +644,18 @@ function setSystemStateSignallersList() {
 		else if (device.detector.type === "Teta SOLERT" || device.detector.type === "Teta SZOA") otherCount++;
 	});
 
+	return { toledCount, otherCount };
+}
+
+// Ustawienie rodzajów sygnalizatorów + ich liczebności w panelu stanu
+function setSystemStateSignallersList() {
+	const { toledCount, otherCount } = signallerCount();
 	const expected = new Map();
 	if (toledCount > 0) expected.set("Tablica ostrzegawcza", toledCount);
 	if (otherCount > 0) expected.set("Optyczno-akustyczne", otherCount);
-
-	// Mapowanie istniejących li po labelu
-	const existingMap = new Map();
-	existingItems.forEach(li => {
-		const label = li.querySelector("div:first-child")?.textContent;
-		if (label) existingMap.set(label, li);
-	});
-
-	// Aktualizuj lub dodaj
-	expected.forEach((count, label) => {
-		if (existingMap.has(label)) {
-			const li = existingMap.get(label);
-			const quantitySpan = li.querySelector("div:nth-child(2) span");
-			if (quantitySpan.textContent !== String(count)) quantitySpan.textContent = count;
-			existingMap.delete(label);
-		} else {
-			signallersList.appendChild(createListItem(label, count));
-		}
-	});
-
-	// Usuń zbędne
-	existingMap.forEach(li => signallersList.removeChild(li));
+	updateSystemList("signallersList", expected);
 }
+
 
 // Ustawienie akcesoriów + ich liczebności w panelu stanu
 function setSystemStateAccessories() {
@@ -878,6 +859,7 @@ function setupSystemEventHandlers() {
 		const index = parseInt(segmentEl.dataset.segmentindex, 10);
 		if (sel.matches("select.segmentDeviceSelect")) {
 			setSegmentDeviceTypeSelectChangeEvent(event, index);
+
 			if (event.target.value === "TOLED") {
 				const segmentEl = document.querySelector(`.actionsSegment[data-segmentindex="${index}"]`);
 				const deviceTypeWrapper = segmentEl.querySelector(`.deviceTypeWrapper`);
@@ -891,8 +873,9 @@ function setupSystemEventHandlers() {
 		} else if (sel.matches("input.segmentWireLength")) {
 			setSegmentWireLengthInputChangeEvent(event, index);
 			updateSegmentUI(index);
-		} else if (sel.matches("input.segmentCheckbox")) {
 		}
+		// else if (sel.matches("input.segmentCheckbox")) {
+		// }
 	});
 
 	container.addEventListener("click", event => {

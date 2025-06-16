@@ -6,7 +6,7 @@ function createStructureTypesListSelect() {
 	STRUCTURE_TYPES.forEach(elem => {
 		const option = createOption(elem.type[lang], elem.type[lang], {
 			class: "structureOption",
-			selected: elem.type[lang] === initSystem.structureType
+			selected: elem.type[lang] === initSystem.structureType,
 		});
 		fragment.appendChild(option);
 	});
@@ -37,7 +37,7 @@ function createDetectedGasListSelect() {
 			class: "gasOption",
 			"data-devicename": device.name,
 			"data-devicetype": device.class,
-			selected: gas === initSystem.gasDetected
+			selected: gas === initSystem.gasDetected,
 		});
 		fragment.appendChild(option);
 	});
@@ -58,12 +58,12 @@ function createBatteryBackUpListSelect() {
 
 	const yesOption = createOption("YES", isPL ? "Tak" : "Yes", {
 		class: "batteryBackupOption",
-		selected: initSystem.batteryBackUp === "YES"
+		selected: initSystem.batteryBackUp === "YES",
 	});
 
 	const noOption = createOption("NO", isPL ? "Nie" : "No", {
 		class: "batteryBackupOption",
-		selected: initSystem.batteryBackUp !== "YES"
+		selected: initSystem.batteryBackUp !== "YES",
 	});
 
 	fragment.appendChild(yesOption);
@@ -118,18 +118,26 @@ function handleFormSubmit() {
 		event.preventDefault();
 		const system = document.getElementById("system");
 		initSystem.amountOfDetectors = parseInt(document.getElementById("amountOfDetectors").value);
-
-		// initSystem.structureType = document.getElementById("structureType").value;
 		const structureType = document.getElementById("structureType").value;
-		initSystem.selectedStructure = STRUCTURE_TYPES.find(structure => structure.type[lang] === structureType);
+		systemData.structureType = STRUCTURE_TYPES.find(structure => structure.type[lang] === structureType);
 
-		initSystem.gasDetected = document.getElementById("gasDetected").value;
-		initSystem.detector = initSystem.selectedStructure.devices.find(device => device.gasDetected === initSystem.gasDetected);
+		const selectedGas = document.getElementById("gasDetected").value;
 
-		initSystem.batteryBackUp = document.getElementById("batteryBackUp").value;
-		initSystem.EWL = parseInt(document.getElementById("EWL").value);
+		systemData.batteryBackUp = document.getElementById("batteryBackUp").value;
 
-		createSystemData();
+		systemData.devicesTypes = { detectors: [], signallers: [] };
+		systemData.bus = [];
+		systemData.supplyType = initSystem.supplyType;
+		systemData.devicesTypes.detectors.push(systemData.structureType.devices.find(device => device.gasDetected === selectedGas));
+		for (let i = 0; i < initSystem.amountOfDetectors; i++) {
+			systemData.bus.push({
+				index: i + 1,
+				detector: initSystem.detector,
+				wireLength: parseInt(document.getElementById("EWL").value),
+				description: "",
+			});
+		}
+
 		setSystem();
 		system.scrollIntoView({ behavior: "smooth", block: "start" });
 		// analiseSystem(systemData);

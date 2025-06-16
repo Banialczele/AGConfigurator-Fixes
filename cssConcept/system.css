@@ -4,6 +4,7 @@
   column-gap: 25px;
   row-gap: 17px;
   margin-bottom: 17px;
+  position: relative;
 }
 
 .system .panelContainer { padding: 15px 20px 40px 10px; }
@@ -204,4 +205,18 @@
 
   .system .systemStatus,
   .system .wrapper { max-width: 100%; }
+}
+
+.popupcontainer {
+  /* position: absolute; */
+  display: none;
+}
+
+.popupContainerToggle {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }

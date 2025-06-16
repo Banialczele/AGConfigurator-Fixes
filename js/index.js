@@ -55,6 +55,8 @@ window.addEventListener("load", () => {
 	initSystemData();
 	setMobileMenuClickEvent();
 	formInit();
+	createSystemDataFromAFile();
+
 	handleFormSubmit();
 	setupSystemEventHandlers();
 	setExportToCSVButtonEvent();
