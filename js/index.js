@@ -5,7 +5,6 @@ let lang = "pl";
 const systemData = {
 	supplyType: `${PowerSupplies[0].type}`,
 	devicesTypes: { detectors: [], signallers: [] },
-	// devices: [],
 	bus: [],
 };
 
@@ -29,7 +28,7 @@ function checkLang() {
 	} else if (HREF.includes(`lang=en`)) {
 		lang = "en";
 	}
-}
+}	
 
 function initSystemData() {
 	const selectedStructure = STRUCTURE_TYPES[0];

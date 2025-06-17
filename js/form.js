@@ -32,10 +32,9 @@ function createDetectedGasListSelect() {
 	structure.detection.forEach((gas, i) => {
 		const device = structure.devices[i];
 		if (device.class !== "detector") return;
-
 		const option = createOption(gas, gas, {
 			class: "gasOption",
-			"data-devicename": device.name,
+			"data-devicename": device.type,
 			"data-devicetype": device.class,
 			selected: gas === initSystem.gasDetected,
 		});
@@ -46,8 +45,11 @@ function createDetectedGasListSelect() {
 
 	select.addEventListener("change", event => {
 		const opt = event.target.selectedOptions[0];
-		initSystem.detector.type = opt.dataset.devicename;
-		initSystem.deviceType = opt.dataset.devicetype;
+		const selectedStructure = STRUCTURE_TYPES.find(structure => structure.type[lang] === initSystem.structureType);
+		const selectedGasDetector = selectedStructure.devices.find(device => device.type === opt.dataset.devicename);
+		initSystem.gasDetected = opt.value;
+		initSystem.detector = selectedGasDetector;
+		initSystem.deviceType = selectedGasDetector.class;
 	});
 }
 
@@ -101,6 +103,12 @@ function setFormSelectChangeEvent() {
 	});
 }
 
+function checkBusLength() {
+	const amountOfDetectors = initSystem.amountOfDetectors;
+	const busLength = systemData.bus[0].wireLength;
+	return amountOfDetectors * busLength;
+}
+
 // Inicjowanie formularza wraz z domyślnymi ustawieniami
 function formInit() {
 	createStructureTypesListSelect();
@@ -108,6 +116,32 @@ function formInit() {
 	createBatteryBackUpListSelect();
 	setInputDefaultData();
 	setFormSelectChangeEvent();
+}
+
+function handleErrorPopup(message) {
+	const popupcontainer = document.querySelector(".configuratorPanel ");
+	const df = document.createDocumentFragment();
+	const paragraph = document.createElement(`p`);
+	const paragraphContainer = document.createElement(`div`);
+	const closeButton = document.createElement(`button`);
+	closeButton.classList.add(`formPopUpParagraphCloseButton`);
+	closeButton.innerText = "X";
+	paragraph.classList.add(`formPopupParagraph`);
+	paragraphContainer.classList.add(`formPopupContainer`);
+
+	paragraphContainer.classList.add("formPopupContainerToggle");
+	paragraphContainer.classList.add("panelContainer");
+	paragraph.innerHTML = message;
+	closeButton.addEventListener(`click`, () => {
+		paragraphContainer.replaceChildren();
+		paragraphContainer.classList.remove(`formPopupContainerToggle`)
+		paragraphContainer.classList.remove(`panelContainer`)
+
+	});
+	paragraphContainer.appendChild(closeButton);
+	paragraphContainer.appendChild(paragraph);
+	df.appendChild(paragraphContainer);
+	popupcontainer.appendChild(df);
 }
 
 // Przetwarzanie formularza dot. systemu
@@ -137,9 +171,20 @@ function handleFormSubmit() {
 				description: "",
 			});
 		}
+		const busLengthTotal = checkBusLength();
+		try {
+			if (busLengthTotal <= 1000) {
+				setSystem();
+				system.scrollIntoView({ behavior: "smooth", block: "start" });
+			} else {
+				throw new Error("Błąd! Zbyt długa odległość między urządzeniami!");
+				return;
+			}
+		} catch ({ name, message }) {
+			handleErrorPopup(message);
+		}
 
-		setSystem();
-		system.scrollIntoView({ behavior: "smooth", block: "start" });
+		// initSystem = {};
 		// analiseSystem(systemData);
 	});
 }

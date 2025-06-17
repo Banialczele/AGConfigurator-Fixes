@@ -27,7 +27,7 @@ const TRANSLATION = {
 	defaultHeader: { pl: "Dane podstawowe", en: "Default data" },
 	detectorAmountsLabel: { pl: "Ilość czujników", en: "Detector quantity" },
 	quantity: { pl: " szt.", en: " pcs." },
-	shadedAmount: { pl: "(max 50szt.)", en: "(max 50pcs.)" },
+	shadedAmount: { pl: "(max 49szt.)", en: "(max 49pcs.)" },
 	structureLabel: { pl: "Rodzaj obiektu", en: "Structure type" },
 	batteryBackUpLabel: {
 		pl: "Akumulatorowe podtrzymanie pracy",
